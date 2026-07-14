@@ -23,20 +23,21 @@ final class MultipeerManager: NSObject {
     private let advertiser: MCNearbyServiceAdvertiser
     private let browser: MCNearbyServiceBrowser
 
-    // Observed by SwiftUI
+    // SwiftUI-observed state
     private(set) var foundPeers: [PeerInfo] = []
     private(set) var connectedPeer: MCPeerID?
     private(set) var pendingInvitingPeer: MCPeerID?
+    private(set) var invitedPeer: MCPeerID?
+    private(set) var isAdvertising = false
+    private(set) var isBrowsing = false
 
-    // Not observed — internal only
     @ObservationIgnored private var pendingInvitationHandler: ((Bool, MCSession?) -> Void)?
 
-    // Callbacks (wired by AppState)
     @ObservationIgnored var onPeerConnected: ((MCPeerID) -> Void)?
     @ObservationIgnored var onPeerDisconnected: (() -> Void)?
     @ObservationIgnored var onDataReceived: ((MultipeerMessage.MessageType, Data, MCPeerID) -> Void)?
 
-    // MARK: - Init (no auto-start)
+    // MARK: - Init
 
     init(customDisplayName: String) {
         self.peerID = MCPeerID(displayName: customDisplayName)
@@ -53,34 +54,59 @@ final class MultipeerManager: NSObject {
         self.session.delegate = self
         self.advertiser.delegate = self
         self.browser.delegate = self
+
+        // Auto-advertise — device selalu bisa ditemukan
+        startAdvertising()
     }
 
-    // MARK: - Manual Discovery Controls
+    // MARK: - Discovery Controls
 
     func startAdvertising() {
+        guard !isAdvertising else { return }
         advertiser.startAdvertisingPeer()
-        print("[MP] Started advertising")
+        isAdvertising = true
+        print("[MP] Started advertising as: \(peerID.displayName)")
+    }
+
+    func stopAdvertising() {
+        advertiser.stopAdvertisingPeer()
+        isAdvertising = false
+        print("[MP] Stopped advertising")
     }
 
     func startBrowsing() {
+        guard !isBrowsing else { return }
         browser.startBrowsingForPeers()
+        isBrowsing = true
         print("[MP] Started browsing")
     }
 
-    func stop() {
-        advertiser.stopAdvertisingPeer()
+    func stopBrowsing() {
         browser.stopBrowsingForPeers()
+        isBrowsing = false
         DispatchQueue.main.async {
             self.foundPeers.removeAll()
         }
-        print("[MP] Stopped discovery")
+        print("[MP] Stopped browsing")
+    }
+
+    func stopSearching() {
+        stopBrowsing()
+    }
+
+    func stopAll() {
+        stopAdvertising()
+        stopBrowsing()
     }
 
     // MARK: - Manual Invite
 
     func invite(_ peerID: MCPeerID) {
         browser.invitePeer(peerID, to: session, withContext: nil, timeout: 30)
-        print("[MP] Sending invite to: \(peerID.displayName)")
+        DispatchQueue.main.async {
+            self.invitedPeer = peerID
+        }
+        print("[MP] Invite sent to: \(peerID.displayName)")
     }
 
     // MARK: - Invitation Response
@@ -120,8 +146,10 @@ final class MultipeerManager: NSObject {
 
     func disconnect() {
         session.disconnect()
+        stopAll()
         DispatchQueue.main.async {
             self.connectedPeer = nil
+            self.invitedPeer = nil
             self.foundPeers.removeAll()
         }
         print("[MP] Disconnected")
@@ -147,6 +175,10 @@ extension MultipeerManager: MCNearbyServiceBrowserDelegate {
             print("[MP] Lost peer: \(peerID.displayName)")
         }
     }
+
+    func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
+        print("[MP] Browse error: \(error.localizedDescription)")
+    }
 }
 
 // MARK: - Advertiser Delegate
@@ -159,12 +191,15 @@ extension MultipeerManager: MCNearbyServiceAdvertiserDelegate {
         invitationHandler: @escaping (Bool, MCSession?) -> Void
     ) {
         print("[MP] Received invitation from: \(peerID.displayName)")
-        // Store handler on whatever thread this arrives (safe — not an @Observable property)
         self.pendingInvitationHandler = invitationHandler
-        // pendingInvitingPeer is @Observable — must update on main thread
         DispatchQueue.main.async {
             self.pendingInvitingPeer = peerID
         }
+    }
+
+    func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
+        print("[MP] Advertise error: \(error.localizedDescription)")
+        DispatchQueue.main.async { self.isAdvertising = false }
     }
 }
 
@@ -172,13 +207,13 @@ extension MultipeerManager: MCNearbyServiceAdvertiserDelegate {
 
 extension MultipeerManager: MCSessionDelegate {
     func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
-        // All state mutations on main thread (class is @Observable)
         switch state {
         case .notConnected:
             print("[MP] Disconnected from: \(peerID.displayName)")
             DispatchQueue.main.async {
                 let wasConnected = self.connectedPeer == peerID
                 if wasConnected { self.connectedPeer = nil }
+                if self.invitedPeer == peerID { self.invitedPeer = nil }
                 self.foundPeers.removeAll { $0.id == peerID }
                 if wasConnected { self.onPeerDisconnected?() }
             }
@@ -190,6 +225,9 @@ extension MultipeerManager: MCSessionDelegate {
             print("[MP] Connected to: \(peerID.displayName)")
             DispatchQueue.main.async {
                 self.connectedPeer = peerID
+                self.invitedPeer = nil
+                // Stop semua — handshake selesai
+                self.stopAll()
                 self.onPeerConnected?(peerID)
             }
 
@@ -199,7 +237,6 @@ extension MultipeerManager: MCSessionDelegate {
     }
 
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
-        // Runs on background thread — decode here, then dispatch update to main
         if let message = try? JSONDecoder().decode(MultipeerMessage.self, from: data) {
             switch message.type {
             case .text:
@@ -208,7 +245,6 @@ extension MultipeerManager: MCSessionDelegate {
                 }
             case .niDiscoveryToken:
                 print("[MP] Received NI token from \(peerID.displayName)")
-                // onDataReceived handler (in AppState) will dispatch to main as needed
                 onDataReceived?(.niDiscoveryToken, message.payload, peerID)
             }
         } else if let text = String(data: data, encoding: .utf8) {

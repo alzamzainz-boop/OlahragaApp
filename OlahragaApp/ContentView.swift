@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  OlahragaApp
-//
-//  Created by Moh Zainul Firdaus on 13/07/26.
-//
-
 import SwiftUI
 
 struct ContentView: View {
@@ -20,7 +13,7 @@ struct ContentView: View {
 
     @ViewBuilder
     private var mainContent: some View {
-        @Bindable var appState = appState   // 👈 buat binding ke properti observable
+        @Bindable var appState = appState
         NavigationStack(path: $appState.navigationPath) {
             DiscoveryView()
                 .navigationDestination(for: AppRoute.self) { route in
@@ -35,7 +28,7 @@ struct ContentView: View {
                 }
         }
         .sheet(isPresented: .init(
-            get: { appState.multipeerManager?.pendingInvitingPeer != nil },
+            get: { appState.pendingInvitingPeer != nil },
             set: { if !$0 { appState.multipeerManager?.declineInvitation() } }
         )) {
             InviteReceivedView()

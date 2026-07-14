@@ -1,4 +1,5 @@
 import SwiftUI
+import MultipeerConnectivity
 
 struct DiscoveryView: View {
     @Environment(AppState.self) private var appState
@@ -13,34 +14,22 @@ struct DiscoveryView: View {
                 Text("You: \(appState.userName)")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                if let mgr = appState.multipeerManager, mgr.isAdvertising {
+                    Label("Discoverable", systemImage: "dot.radiowaves.left.and.right")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                }
             }
             .padding(.top, 20)
 
             if isSearching {
-                // Searching indicator
                 ProgressView("Searching for nearby devices...")
                     .foregroundStyle(.secondary)
 
-                // Peer list
                 if let manager = appState.multipeerManager, !manager.foundPeers.isEmpty {
                     List(manager.foundPeers) { peer in
-                        HStack {
-                            Image(systemName: "person.circle")
-                                .font(.title2)
-                                .foregroundStyle(.orange)
-
-                            Text(peer.displayName)
-                                .font(.body)
-
-                            Spacer()
-
-                            Button("Connect") {
-                                manager.invite(peer.id)
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.orange)
-                        }
-                        .padding(.vertical, 4)
+                        peerRow(peer: peer, manager: manager)
+                            .listRowBackground(Color.clear)
                     }
                     .listStyle(.plain)
                 } else {
@@ -59,15 +48,13 @@ struct DiscoveryView: View {
                 Spacer()
             }
 
-            // Search button
             Button {
                 isSearching.toggle()
                 guard let manager = appState.multipeerManager else { return }
                 if isSearching {
-                    manager.startAdvertising()
                     manager.startBrowsing()
                 } else {
-                    manager.stop()
+                    manager.stopSearching()
                 }
             } label: {
                 Label(isSearching ? "Stop Searching" : "Search Nearby",
@@ -82,5 +69,43 @@ struct DiscoveryView: View {
             .padding(.bottom, 20)
         }
         .navigationBarBackButtonHidden(true)
+    }
+
+    @ViewBuilder
+    private func peerRow(peer: PeerInfo, manager: MultipeerManager) -> some View {
+        let isInvited = manager.invitedPeer == peer.id
+
+        HStack {
+            Image(systemName: "person.circle")
+                .font(.title2)
+                .foregroundStyle(.orange)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(peer.displayName)
+                    .font(.body)
+                if isInvited {
+                    Text("Waiting for response...")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            }
+
+            Spacer()
+
+            Button {
+                manager.invite(peer.id)
+            } label: {
+                if isInvited {
+                    ProgressView()
+                        .tint(.orange)
+                } else {
+                    Text("Connect")
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.orange)
+            .disabled(isInvited)
+        }
+        .padding(.vertical, 4)
     }
 }
