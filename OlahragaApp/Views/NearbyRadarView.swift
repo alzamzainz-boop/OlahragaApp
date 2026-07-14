@@ -53,9 +53,8 @@ struct NearbyRadarView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
-                    // Cleanup saat keluar
-                    appState.niManager.reset()
-                    appState.multipeerManager?.disconnect()
+                    // Navigasi balik — cleanup dilakukan di onDisappear
+                    appState.navigationPath.removeAll()
                 } label: {
                     Image(systemName: "chevron.left")
                         .foregroundStyle(.orange)
@@ -63,10 +62,8 @@ struct NearbyRadarView: View {
             }
         }
         .onDisappear {
-            // Pastikan session stop saat view hilang (misalnya di-dismiss paksa)
-            if !appState.niManager.isSessionActive {
-                appState.niManager.reset()
-            }
+            // Cleanup saat view benar-benar hilang
+            appState.fullCleanup()
         }
     }
 
@@ -136,5 +133,153 @@ struct NearbyRadarView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+}
+
+// MARK: - Preview Helpers
+
+#Preview("Radar - Connecting") {
+    RadarPreview(state: .connecting)
+}
+
+#Preview("Radar - Active with Direction") {
+    RadarPreview(state: .activeWithDirection)
+}
+
+#Preview("Radar - Active no UWB") {
+    RadarPreview(state: .activeNoDirection)
+}
+
+#Preview("Radar - Error") {
+    RadarPreview(state: .error)
+}
+
+#Preview("Radar - Out of Range") {
+    RadarPreview(state: .outOfRange)
+}
+
+// MARK: - Preview Implementation
+
+enum RadarPreviewState {
+    case connecting, activeWithDirection, activeNoDirection, error, outOfRange
+}
+
+struct RadarPreview: View {
+    let state: RadarPreviewState
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 40) {
+                Text("TestUser's Partner")
+                    .font(.title2)
+                    .foregroundStyle(.orange)
+
+                ZStack {
+                    Circle()
+                        .stroke(Color.orange.opacity(0.3), lineWidth: 2)
+                        .frame(width: 280, height: 280)
+
+                    Circle()
+                        .stroke(Color.orange.opacity(0.15), lineWidth: 1)
+                        .frame(width: 180, height: 180)
+
+                    radarContent
+                }
+
+                distanceDisplay
+
+                if shouldShowCloseEnough {
+                    Text("Close enough to start!")
+                        .font(.headline)
+                        .foregroundStyle(.green)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(Color.green.opacity(0.15))
+                        .cornerRadius(20)
+                }
+
+                Spacer()
+            }
+            .padding(.top, 60)
+        }
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Image(systemName: "chevron.left")
+                    .foregroundStyle(.orange)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var radarContent: some View {
+        switch state {
+        case .connecting:
+            VStack(spacing: 12) {
+                ProgressView()
+                    .tint(.orange)
+                Text("Connecting...")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+        case .activeWithDirection:
+            Image(systemName: "arrow.up")
+                .font(.system(size: 80, weight: .bold))
+                .foregroundStyle(.orange)
+                .rotationEffect(.degrees(-45))
+                .animation(.smooth(duration: 0.3), value: -45)
+
+        case .activeNoDirection:
+            Image(systemName: "location.circle")
+                .font(.system(size: 50))
+                .foregroundStyle(.orange.opacity(0.5))
+
+        case .error:
+            VStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 40))
+                    .foregroundStyle(.orange)
+                Text("Session failed. Tap to retry.")
+                    .font(.caption)
+                    .foregroundStyle(.orange.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+
+        case .outOfRange:
+            Image(systemName: "wifi.slash")
+                .font(.system(size: 50))
+                .foregroundStyle(.orange.opacity(0.5))
+        }
+    }
+
+    @ViewBuilder
+    private var distanceDisplay: some View {
+        switch state {
+        case .outOfRange:
+            Text("Partner out of range")
+                .font(.headline)
+                .foregroundStyle(.orange.opacity(0.7))
+
+        case .activeWithDirection, .activeNoDirection:
+            VStack(spacing: 4) {
+                Text(state == .activeWithDirection ? "1.5" : "2.0")
+                    .font(.system(size: 64, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                Text("meters")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+        default:
+            EmptyView()
+        }
+    }
+
+    private var shouldShowCloseEnough: Bool {
+        state == .activeWithDirection || state == .activeNoDirection
     }
 }

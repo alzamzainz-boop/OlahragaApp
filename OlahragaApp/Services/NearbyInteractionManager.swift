@@ -24,6 +24,7 @@ final class NearbyInteractionManager: NSObject {
     // MARK: - Private
 
     @ObservationIgnored private var session: NISession?
+    @ObservationIgnored private var isConfiguring = false  // Guard against double-configure race
 
     override init() {
         super.init()
@@ -53,6 +54,11 @@ final class NearbyInteractionManager: NSObject {
 
     /// Called when peer's token arrives via Multipeer (runs on background thread — safe).
     func handleReceivedToken(_ data: Data) {
+        guard !isConfiguring else {
+            print("[NI] Already configuring, ignoring token")
+            return
+        }
+
         guard let token = try? NSKeyedUnarchiver.unarchivedObject(
             ofClass: NIDiscoveryToken.self,
             from: data
@@ -66,6 +72,7 @@ final class NearbyInteractionManager: NSObject {
             return
         }
 
+        isConfiguring = true
         let config = NINearbyPeerConfiguration(peerToken: token)
         session.run(config)
 
@@ -73,16 +80,19 @@ final class NearbyInteractionManager: NSObject {
         DispatchQueue.main.async {
             self.isSessionActive = true
             self.errorMessage = nil
+            self.isConfiguring = false
         }
         print("[NI] Session started with peer token")
     }
 
     // MARK: - Reset + Retry
 
-    /// Invalidates current session, creates a new one, then triggers token re-exchange.
+    /// Invalidates current session, creates a new one, waits briefly, then triggers token re-exchange.
+    /// Delay prevents race condition when both peers reset simultaneously.
     func reset() {
         session?.invalidate()
         session = nil
+        isConfiguring = false
 
         // Clear all state on main thread
         DispatchQueue.main.async {
@@ -96,11 +106,11 @@ final class NearbyInteractionManager: NSObject {
 
         setupSession()
 
-        // Notify AppState to re-send local token so peer can restart too
-        DispatchQueue.main.async {
-            self.onNeedsTokenResend?()
+        // Delay token resend to avoid race condition with peer resetting simultaneously
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.onNeedsTokenResend?()
         }
-        print("[NI] Session reset, token resend triggered")
+        print("[NI] Session reset, token resend scheduled")
     }
 
     // MARK: - Arrow Angle

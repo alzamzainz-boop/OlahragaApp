@@ -68,7 +68,8 @@ final class AppState {
 
         manager.onPeerDisconnected = { [weak self] in
             guard let self else { return }
-            self.niManager.reset()
+            // Hanya clear state, JANGAN panggil reset() di sini
+            // Biarkan fullCleanup() orchestrate cleanup terpusat
             self.currentRoom = nil
             self.navigationPath.removeAll()
         }
@@ -81,5 +82,21 @@ final class AppState {
             multipeerManager?.sendData(encoded)
             print("[AppState] Sent local NI token")
         }
+    }
+
+    /// Single entry point untuk cleanup. Dipanggil dari View.
+    /// idempotent — aman dipanggil berkali-kali.
+    func fullCleanup() {
+        // 1. Reset NI session (ini akan invalidate dan buat session baru)
+        niManager.reset()
+
+        // 2. Disconnect Multipeer (callback onPeerDisconnected hanya clear state, tidak reset NI)
+        multipeerManager?.disconnect()
+
+        // 3. Clear room state
+        currentRoom = nil
+        navigationPath.removeAll()
+
+        print("[AppState] Full cleanup done")
     }
 }
