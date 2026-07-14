@@ -87,8 +87,7 @@ final class NearbyInteractionManager: NSObject {
 
     // MARK: - Reset + Retry
 
-    /// Invalidates current session, creates a new one, waits briefly, then triggers token re-exchange.
-    /// Delay prevents race condition when both peers reset simultaneously.
+    /// Invalidates current session, creates a new one, then triggers token re-exchange.
     func reset() {
         session?.invalidate()
         session = nil
@@ -105,12 +104,7 @@ final class NearbyInteractionManager: NSObject {
         }
 
         setupSession()
-
-        // Delay token resend to avoid race condition with peer resetting simultaneously
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            self?.onNeedsTokenResend?()
-        }
-        print("[NI] Session reset, token resend scheduled")
+        print("[NI] Session reset complete")
     }
 
     // MARK: - Arrow Angle

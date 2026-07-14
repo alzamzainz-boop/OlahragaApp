@@ -76,6 +76,10 @@ final class AppState {
     }
 
     private func sendLocalNIToken() {
+        guard multipeerManager?.connectedPeer != nil else {
+            print("[AppState] Skipping token send: no connected peer")
+            return
+        }
         guard let tokenData = niManager.localTokenData() else { return }
         let envelope = MultipeerMessage(type: .niDiscoveryToken, payload: tokenData)
         if let encoded = try? JSONEncoder().encode(envelope) {
