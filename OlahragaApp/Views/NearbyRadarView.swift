@@ -61,9 +61,18 @@ struct NearbyRadarView: View {
                 }
             }
         }
+        .onChange(of: appState.currentRoom) { _, newRoom in
+            // Kalau room terbentuk, jangan cleanup
+            if newRoom != nil {
+                print("[Radar] Room formed, staying connected")
+            }
+        }
         .onDisappear {
-            // Cleanup saat view benar-benar hilang
-            appState.fullCleanup()
+            // Cleanup HANYA kalau tidak sedang forming room
+            // Kalau room != nil, berarti navigasi otomatis, jangan cleanup
+            if appState.currentRoom == nil {
+                appState.fullCleanup()
+            }
         }
     }
 
