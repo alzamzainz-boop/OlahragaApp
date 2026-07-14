@@ -7,6 +7,7 @@ struct MultipeerMessage: Codable {
     enum MessageType: String, Codable {
         case text
         case niDiscoveryToken
+        case niTokenACK  // Acknowledgment that peer received our token
     }
     let type: MessageType
     let payload: Data
@@ -246,6 +247,9 @@ extension MultipeerManager: MCSessionDelegate {
             case .niDiscoveryToken:
                 print("[MP] Received NI token from \(peerID.displayName)")
                 onDataReceived?(.niDiscoveryToken, message.payload, peerID)
+            case .niTokenACK:
+                print("[MP] Received token ACK from \(peerID.displayName)")
+                onDataReceived?(.niTokenACK, message.payload, peerID)
             }
         } else if let text = String(data: data, encoding: .utf8) {
             print("[MP] Legacy text from \(peerID.displayName): \(text)")

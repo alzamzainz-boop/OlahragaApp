@@ -16,10 +16,7 @@ final class NearbyInteractionManager: NSObject {
 
     // MARK: - Callbacks (wired by AppState)
 
-    @ObservationIgnored var onSendTokenData: ((Data) -> Void)?
     @ObservationIgnored var onProximityUpdate: ((Double) -> Void)?
-    /// Called after reset() so AppState can re-send the local token to peer
-    @ObservationIgnored var onNeedsTokenResend: (() -> Void)?
 
     // MARK: - Private
 

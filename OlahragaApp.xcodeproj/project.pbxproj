@@ -286,6 +286,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OlahragaApp/Info.plist;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "We use local network to find nearby workout challengers.";
+				INFOPLIST_KEY_NSNearbyInteractionUsageDescription = "Flint uses Nearby Interaction to show direction and distance to your workout partner.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -320,6 +321,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OlahragaApp/Info.plist;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "We use local network to find nearby workout challengers.";
+				INFOPLIST_KEY_NSNearbyInteractionUsageDescription = "Flint uses Nearby Interaction to show direction and distance to your workout partner.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

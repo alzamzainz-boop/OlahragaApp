@@ -7,7 +7,5 @@
 		<string>_fit-challenge._tcp</string>
 		<string>_fit-challenge._udp</string>
 	</array>
-	<key>NSNearbyInteractionAllowOnceUsageDescription</key>
-	<string>Flint uses Nearby Interaction to show direction and distance to your workout partner.</string>
 </dict>
 </plist>
