@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_fit-challenge._tcp</string>
+		<string>_fit-challenge._udp</string>
+	</array>
+	<key>NSNearbyInteractionAllowOnceUsageDescription</key>
+	<string>Flint uses Nearby Interaction to show direction and distance to your workout partner.</string>
+</dict>
+</plist>

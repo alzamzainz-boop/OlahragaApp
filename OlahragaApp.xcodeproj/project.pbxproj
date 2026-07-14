@@ -6,13 +6,31 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		BFC527943005E913006C8929 /* NearbyInteraction.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BFC527933005E913006C8929 /* NearbyInteraction.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		BF431F183004BB65003C874B /* OlahragaApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OlahragaApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BFC527933005E913006C8929 /* NearbyInteraction.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NearbyInteraction.framework; path = System/Library/Frameworks/NearbyInteraction.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		BF431F273004BD91003C874B /* Exceptions for "OlahragaApp" folder in "OlahragaApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = BF431F173004BB65003C874B /* OlahragaApp */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		BF431F1A3004BB65003C874B /* OlahragaApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				BF431F273004BD91003C874B /* Exceptions for "OlahragaApp" folder in "OlahragaApp" target */,
+			);
 			path = OlahragaApp;
 			sourceTree = "<group>";
 		};
@@ -23,6 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BFC527943005E913006C8929 /* NearbyInteraction.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +52,7 @@
 			isa = PBXGroup;
 			children = (
 				BF431F1A3004BB65003C874B /* OlahragaApp */,
+				BFC527923005E913006C8929 /* Frameworks */,
 				BF431F193004BB65003C874B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -43,6 +63,14 @@
 				BF431F183004BB65003C874B /* OlahragaApp.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		BFC527923005E913006C8929 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				BFC527933005E913006C8929 /* NearbyInteraction.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -256,6 +284,8 @@
 				DEVELOPMENT_TEAM = CJZ2787AMQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OlahragaApp/Info.plist;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "We use local network to find nearby workout challengers.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,6 +318,8 @@
 				DEVELOPMENT_TEAM = CJZ2787AMQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OlahragaApp/Info.plist;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "We use local network to find nearby workout challengers.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
